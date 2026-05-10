@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта племени — интерактивный граф</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1e2a1a;
+            font-family: 'Segoe UI', 'Arial', system-ui;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 30px;
+        }
+
+        /* Основной контейнер карты */
+        .map {
+            background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+            background-color: #3b5a2b;
+            background-blend-mode: overlay;
+            border-radius: 48px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.5);
+            border: 2px solid #d4b87a;
+        }
+
+        /* Сетка для расстановки локаций и дорожек */
+        .map-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            position: relative;
+            flex-wrap: wrap;
+        }
+
+        /* Карточка локации (квадратик) */
+        .location {
+            background: #2c2118;
+            border: 3px solid #e4c48b;
+            border-radius: 24px;
+            width: 150px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 0 #4a2e1a;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: brightness(0.9);
+        }
+
+        /* Эффект наведения */
+        .location:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 0 #4a2e1a;
+            border-color: #ffd966;
+        }
+
+        .location-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .location-name {
+            font-weight: bold;
+            color: #ffefc0;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 0 #2a1a0a;
+        }
+
+        /* Стрелки-связи (имитация линий) */
+        .row .location:not(:last-child)::after {
+            content: "➡️";
+            position: absolute;
+            right: -45px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 28px;
+            color: #ffd966;
+            text-shadow: 0 0 3px black;
+            pointer-events: none;
+        }
+
+        /* вертикальные стрелки между рядами */
+        .row:not(:last-child) .location::before {
+            content: "⬇️";
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            color: #ffd966;
+            text-shadow: 0 0 3px black;
+            pointer-events: none;
+        }
+
+        /* Панель информации */
+        .info-panel {
+            margin-top: 40px;
+            background: #1f2a15e6;
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 18px 24px;
+            color: #f9f2da;
+            border: 1px solid #dbb45c;
+            transition: all 0.2s;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .info-title {
+            font-size: 1.8rem;
+            margin: 0 0 8px 0;
+            border-left: 5px solid #f5bc42;
+            padding-left: 20px;
+        }
+
+        .info-desc {
+            font-size: 1.1rem;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .info-hint {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .location { width: 120px; }
+            .row { gap: 40px; }
+            .row .location:not(:last-child)::after { right: -30px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="map">
+    <div class="map-grid">
+        <!-- Ряд 1 -->
+        <div class="row">
+            <div class="location" data-name="Священная роща" data-desc="Древние дубы, духи предков. Здесь шаман проводит обряды. 🧙‍♂️🌳">
+                <div class="location-icon">🌳</div>
+                <div class="location-name">Священная роща</div>
+            </div>
+            <div class="location" data-name="Кострище" data-desc="Центральный костёр племени. Легенды, песни, мясо мамонта 🔥🍖">
+                <div class="location-icon">🔥</div>
+                <div class="location-name">Кострище</div>
+            </div>
+            <div class="location" data-name="Лагерь охотников" data-desc="Луки, копья, шкуры. Отсюда уходят на охоту 🏹🐗">
+                <div class="location-icon">🏹</div>
+                <div class="location-name">Лагерь охотников</div>
+            </div>
+        </div>
+
+        <!-- Ряд 2 -->
+        <div class="row">
+            <div class="location" data-name="Тотемный столб" data-desc="Вырезан из священного дерева. Защищает племя от злых духов 🪶🐺">
+                <div class="location-icon">🪶</div>
+                <div class="location-name">Тотемный столб</div>
+            </div>
+            <div class="location" data-name="Пещера духов" data-desc="Только посвящённые входят внутрь. Там видят сны 🦇✨">
+                <div class="location-icon">🦇</div>
+                <div class="location-name">Пещера духов</div>
+            </div>
+            <div class="location" data-name="Река жизни" data-desc="Рыба, целебная вода, у берега лодки-долблёнки 🐟🌊">
+                <div class="location-icon">🌊</div>
+                <div class="location-name">Река жизни</div>
+            </div>
+        </div>
+
+        <!-- Ряд 3 -->
+        <div class="row">
+            <div class="location" data-name="Поле битвы" data-desc="Место былых сражений. По ночам слышны шаги воинов ⚔️💀">
+                <div class="location-icon">⚔️</div>
+                <div class="location-name">Поле битвы</div>
+            </div>
+            <div class="location" data-name="Стойбище вождя" data-desc="Главный шатёр, трон из бивней, награждения 🛡️👑">
+                <div class="location-icon">🛡️</div>
+                <div class="location-name">Стойбище вождя</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <h3 class="info-title" id="infoTitle">🗺️ Карта племени</h3>
+        <p class="info-desc" id="infoDesc">Нажми на любую локацию — узнаешь легенды и возможности.</p>
+        <div class="info-hint">✨ Наведи курсор и кликни ✨</div>
+    </div>
+</div>
+
+<script>
+    // Делаем все локации кликабельными
+    const locations = document.querySelectorAll('.location');
+    const titleEl = document.getElementById('infoTitle');
+    const descEl = document.getElementById('infoDesc');
+
+    locations.forEach(loc => {
+        loc.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const name = loc.getAttribute('data-name');
+            const desc = loc.getAttribute('data-desc');
+            titleEl.innerHTML = `📍 ${name}`;
+            descEl.innerHTML = desc;
+        });
+    });
+</script>
+</body>
+</html>
