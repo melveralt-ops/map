@@ -2,226 +2,228 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Карта племени — интерактивный граф</title>
+    <title>Карта племени</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
             background: #1e2a1a;
-            font-family: 'Segoe UI', 'Arial', system-ui;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 30px;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Основной контейнер карты */
+        /* Контейнер карты (делаем шире) */
         .map {
-            background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
-            background-color: #3b5a2b;
-            background-blend-mode: overlay;
-            border-radius: 48px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 30px rgba(0,0,0,0.5);
-            border: 2px solid #d4b87a;
-        }
-
-        /* Сетка для расстановки локаций и дорожек */
-        .map-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .row {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
+            width: 1400px;
+            max-width: 95vw;
             position: relative;
-            flex-wrap: wrap;
-        }
-
-        /* Карточка локации (квадратик) */
-        .location {
-            background: #2c2118;
-            border: 3px solid #e4c48b;
-            border-radius: 24px;
-            width: 150px;
-            padding: 15px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 8px 0 #4a2e1a;
-            position: relative;
+            background-image: url('https://i.ibb.co/6czn3NfS/proba.png');
             background-size: cover;
             background-position: center;
-            backdrop-filter: brightness(0.9);
+            background-repeat: no-repeat;
+            border-radius: 32px;
+            border: 3px solid #d4b87a;
+            aspect-ratio: 16 / 9; /* широкоформатно */
         }
 
-        /* Эффект наведения */
+        /* Локация — квадратик */
+        .location {
+            position: absolute;
+            width: 120px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+            filter: drop-shadow(0 4px 6px black);
+        }
+
         .location:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 0 #4a2e1a;
-            border-color: #ffd966;
+            transform: scale(1.05);
         }
 
-        .location-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
+        /* Картинка внутри локации */
+        .location img {
+            width: 100%;
+            border-radius: 20px;
+            border: 3px solid #ffd966;
+            background: #2c2118cc;
+            backdrop-filter: blur(2px);
         }
 
-        .location-name {
-            font-weight: bold;
+        /* Название локации */
+        .location span {
+            display: block;
+            background: #1f1a10cc;
             color: #ffefc0;
-            font-size: 1.1rem;
-            text-shadow: 1px 1px 0 #2a1a0a;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 20px;
+            margin-top: 6px;
+            font-weight: bold;
         }
 
-        /* Стрелки-связи (имитация линий) */
-        .row .location:not(:last-child)::after {
-            content: "➡️";
+        /* Линия-стрелка */
+        .line {
             position: absolute;
-            right: -45px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 28px;
-            color: #ffd966;
-            text-shadow: 0 0 3px black;
+            background: no-repeat center;
+            background-size: contain;
             pointer-events: none;
-        }
-
-        /* вертикальные стрелки между рядами */
-        .row:not(:last-child) .location::before {
-            content: "⬇️";
-            position: absolute;
-            bottom: -45px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 28px;
-            color: #ffd966;
-            text-shadow: 0 0 3px black;
-            pointer-events: none;
+            z-index: 5;
         }
 
         /* Панель информации */
         .info-panel {
-            margin-top: 40px;
+            margin-top: 20px;
             background: #1f2a15e6;
             backdrop-filter: blur(12px);
             border-radius: 40px;
             padding: 18px 24px;
             color: #f9f2da;
-            border: 1px solid #dbb45c;
-            transition: all 0.2s;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .info-title {
-            font-size: 1.8rem;
-            margin: 0 0 8px 0;
-            border-left: 5px solid #f5bc42;
-            padding-left: 20px;
-        }
-
-        .info-desc {
-            font-size: 1.1rem;
-            line-height: 1.4;
-            margin: 0;
-        }
-
-        .info-hint {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-top: 10px;
+            max-width: 800px;
+            width: 90%;
             text-align: center;
+            border: 1px solid #dbb45c;
         }
 
-        @media (max-width: 800px) {
-            .location { width: 120px; }
-            .row { gap: 40px; }
-            .row .location:not(:last-child)::after { right: -30px; font-size: 20px; }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
         }
     </style>
 </head>
 <body>
-
-<div class="map">
-    <div class="map-grid">
-        <!-- Ряд 1 -->
-        <div class="row">
-            <div class="location" data-name="Священная роща" data-desc="Древние дубы, духи предков. Здесь шаман проводит обряды. 🧙‍♂️🌳">
-                <div class="location-icon">🌳</div>
-                <div class="location-name">Священная роща</div>
-            </div>
-            <div class="location" data-name="Кострище" data-desc="Центральный костёр племени. Легенды, песни, мясо мамонта 🔥🍖">
-                <div class="location-icon">🔥</div>
-                <div class="location-name">Кострище</div>
-            </div>
-            <div class="location" data-name="Лагерь охотников" data-desc="Луки, копья, шкуры. Отсюда уходят на охоту 🏹🐗">
-                <div class="location-icon">🏹</div>
-                <div class="location-name">Лагерь охотников</div>
-            </div>
-        </div>
-
-        <!-- Ряд 2 -->
-        <div class="row">
-            <div class="location" data-name="Тотемный столб" data-desc="Вырезан из священного дерева. Защищает племя от злых духов 🪶🐺">
-                <div class="location-icon">🪶</div>
-                <div class="location-name">Тотемный столб</div>
-            </div>
-            <div class="location" data-name="Пещера духов" data-desc="Только посвящённые входят внутрь. Там видят сны 🦇✨">
-                <div class="location-icon">🦇</div>
-                <div class="location-name">Пещера духов</div>
-            </div>
-            <div class="location" data-name="Река жизни" data-desc="Рыба, целебная вода, у берега лодки-долблёнки 🐟🌊">
-                <div class="location-icon">🌊</div>
-                <div class="location-name">Река жизни</div>
-            </div>
-        </div>
-
-        <!-- Ряд 3 -->
-        <div class="row">
-            <div class="location" data-name="Поле битвы" data-desc="Место былых сражений. По ночам слышны шаги воинов ⚔️💀">
-                <div class="location-icon">⚔️</div>
-                <div class="location-name">Поле битвы</div>
-            </div>
-            <div class="location" data-name="Стойбище вождя" data-desc="Главный шатёр, трон из бивней, награждения 🛡️👑">
-                <div class="location-icon">🛡️</div>
-                <div class="location-name">Стойбище вождя</div>
-            </div>
-        </div>
+<div class="container">
+    <div class="map" id="mapContainer">
+        <!-- СЮДА БУДУТ ДОБАВЛЯТЬСЯ ЛОКАЦИИ И ЛИНИИ -->
     </div>
-
     <div class="info-panel" id="infoPanel">
-        <h3 class="info-title" id="infoTitle">🗺️ Карта племени</h3>
-        <p class="info-desc" id="infoDesc">Нажми на любую локацию — узнаешь легенды и возможности.</p>
-        <div class="info-hint">✨ Наведи курсор и кликни ✨</div>
+        <h3 id="infoTitle">🌍 Кликни на локацию</h3>
+        <p id="infoDesc">Нажми на любой значок на карте</p>
     </div>
 </div>
 
 <script>
-    // Делаем все локации кликабельными
-    const locations = document.querySelectorAll('.location');
-    const titleEl = document.getElementById('infoTitle');
-    const descEl = document.getElementById('infoDesc');
+    // ========== ДАННЫЕ ЛОКАЦИЙ ==========
+    const locationsData = {
+        "пещера": {
+            left: "10%",      // отступ слева (можно "200px", "15%")
+            top: "20%",       // отступ сверху
+            img: "cave.png",  // картинка локации (положите в репозиторий)
+            name: "Пещера духов",
+            desc: "Тёмный грот, где обитают предки. 🦇"
+        },
+        "костер": {
+            left: "70%",
+            top: "15%",
+            img: "fire.png",
+            name: "Священный костёр",
+            desc: "Место ночных ритуалов. 🔥"
+        },
+        "река": {
+            left: "50%",
+            top: "70%",
+            img: "river.png",
+            name: "Река Жизни",
+            desc: "Ловим рыбу и слушаем воду. 🐟"
+        }
+    };
 
-    locations.forEach(loc => {
-        loc.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const name = loc.getAttribute('data-name');
-            const desc = loc.getAttribute('data-desc');
-            titleEl.innerHTML = `📍 ${name}`;
-            descEl.innerHTML = desc;
+    // ========== СТРЕЛКИ МЕЖДУ ЛОКАЦИЯМИ (ключ → куда) ==========
+    const connections = [
+        { from: "пещера", to: "костер" },
+        { from: "костер", to: "река" },
+        { from: "пещера", to: "река" }
+    ];
+
+    // ========== СОЗДАЁМ КАРТУ ==========
+    const mapDiv = document.getElementById('mapContainer');
+    const locationsRefs = {}; // сохраним ссылки на DOM-элементы
+
+    // 1. Рисуем локации
+    for (const [id, data] of Object.entries(locationsData)) {
+        const locDiv = document.createElement('div');
+        locDiv.className = 'location';
+        locDiv.style.left = data.left;
+        locDiv.style.top = data.top;
+        locDiv.setAttribute('data-id', id);
+        locDiv.setAttribute('data-name', data.name);
+        locDiv.setAttribute('data-desc', data.desc);
+
+        // картинка
+        const img = document.createElement('img');
+        img.src = data.img;
+        img.alt = data.name;
+        const span = document.createElement('span');
+        span.innerText = data.name;
+
+        locDiv.appendChild(img);
+        locDiv.appendChild(span);
+
+        // клик
+        locDiv.addEventListener('click', () => {
+            document.getElementById('infoTitle').innerHTML = `📍 ${data.name}`;
+            document.getElementById('infoDesc').innerHTML = data.desc;
         });
-    });
+
+        mapDiv.appendChild(locDiv);
+        locationsRefs[id] = locDiv;
+    }
+
+    // 2. Рисуем линии (стрелки) ПОСЛЕ того, как локации появились на странице
+    function drawLine(fromId, toId) {
+        const fromEl = locationsRefs[fromId];
+        const toEl = locationsRefs[toId];
+        if (!fromEl || !toEl) return;
+
+        const fromRect = fromEl.getBoundingClientRect();
+        const toRect = toEl.getBoundingClientRect();
+        const mapRect = mapDiv.getBoundingClientRect();
+
+        // центр квадратика
+        const fromX = fromRect.left + fromRect.width / 2 - mapRect.left;
+        const fromY = fromRect.top + fromRect.height / 2 - mapRect.top;
+        const toX = toRect.left + toRect.width / 2 - mapRect.left;
+        const toY = toRect.top + toRect.height / 2 - mapRect.top;
+
+        // длина и угол
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+        const length = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        // создаём линию
+        const line = document.createElement('div');
+        line.className = 'line';
+        line.style.width = `${length}px`;
+        line.style.height = '4px';
+        line.style.background = `linear-gradient(90deg, #ffaa44, #b87a2e)`;
+        line.style.left = `${fromX}px`;
+        line.style.top = `${fromY - 2}px`;
+        line.style.transform = `rotate(${angle}deg)`;
+        line.style.transformOrigin = '0 0';
+        line.style.position = 'absolute';
+
+        // наконечник стрелки
+        line.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><polygon points=\"0,0 10,5 0,10\" fill=\"%23ffaa44\"/></svg>')`;
+        line.style.backgroundRepeat = 'no-repeat';
+        line.style.backgroundPosition = 'right center';
+        line.style.backgroundSize = '10px';
+
+        mapDiv.appendChild(line);
+    }
+
+    // рисуем все связи
+    setTimeout(() => {
+        connections.forEach(conn => drawLine(conn.from, conn.to));
+    }, 100); // маленькая задержка, чтобы браузер точно рассчитал позиции
 </script>
 </body>
 </html>
