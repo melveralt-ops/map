@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Карта племени</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта племени — Речные угодья</title>
     <style>
         * {
             margin: 0;
@@ -11,219 +12,469 @@
         }
 
         body {
-            background: #1e2a1a;
+            background: linear-gradient(145deg, #1a3a4a 0%, #0d2a38 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
+            padding: 30px;
+            font-family: 'Segoe UI', 'Arial', system-ui;
         }
 
-        /* Контейнер карты (делаем шире) */
-        .map {
-            width: 1400px;
-            max-width: 95vw;
+        /* Контейнер карты */
+        .map-wrapper {
             position: relative;
-            background-image: url('https://i.ibb.co/6czn3NfS/proba.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            border-radius: 32px;
-            border: 3px solid #d4b87a;
-            aspect-ratio: 16 / 9; /* широкоформатно */
+            display: inline-block;
+            border-radius: 24px;
+            border: 3px solid #7ab3c8;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.4), 0 0 0 2px #4a7c8f inset;
+            background: #2a5f6e;
         }
 
-        /* Локация — квадратик */
-        .location {
-            position: absolute;
-            width: 120px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            text-align: center;
-            filter: drop-shadow(0 4px 6px black);
-        }
-
-        .location:hover {
-            transform: scale(1.05);
-        }
-
-        /* Картинка внутри локации */
-        .location img {
-            width: 100%;
-            border-radius: 20px;
-            border: 3px solid #ffd966;
-            background: #2c2118cc;
-            backdrop-filter: blur(2px);
-        }
-
-        /* Название локации */
-        .location span {
+        .map-wrapper img {
             display: block;
-            background: #1f1a10cc;
-            color: #ffefc0;
-            font-size: 14px;
-            padding: 4px;
+            max-width: 100%;
+            height: auto;
             border-radius: 20px;
-            margin-top: 6px;
-            font-weight: bold;
         }
 
-        /* Линия-стрелка */
-        .line {
+        /* Контейнер для карточек локаций */
+        .overlay {
             position: absolute;
-            background: no-repeat center;
-            background-size: contain;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 5;
         }
 
-        /* Панель информации */
-        .info-panel {
-            margin-top: 20px;
-            background: #1f2a15e6;
-            backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 18px 24px;
-            color: #f9f2da;
-            max-width: 800px;
-            width: 90%;
+        /* Карточка локации (иконка + подпись вместе) */
+        .location-card {
+            position: absolute;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.25s ease-out;
+            filter: drop-shadow(0 4px 8px rgba(0, 20, 30, 0.5));
+            z-index: 10;
             text-align: center;
-            border: 1px solid #dbb45c;
+            min-width: 100px;
+            transform-origin: center center;
         }
 
-        .container {
+        /* Эффект приближения при наведении */
+        .location-card:hover {
+            transform: scale(1.1) translateY(-3px);
+            filter: drop-shadow(0 10px 20px rgba(0, 30, 40, 0.6));
+            z-index: 20;
+        }
+
+        /* Иконка локации */
+        .location-icon {
+            background: #1a4a58cc;
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 8px;
+            border: 2px solid #8bcbd9;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+
+        .location-card:hover .location-icon {
+            border-color: #ffd966;
+            background: #1a5a6acc;
+        }
+
+        .location-icon img {
+            width: 52px;
+            height: 52px;
+            display: block;
+        }
+
+        /* Контейнер для подписи и иконок действий (всё в одну строку) */
+        .label-actions-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            max-width: 160px;
+        }
+
+        /* Подпись под иконкой */
+        .location-label {
+            background: #0e3a46cc;
+            backdrop-filter: blur(8px);
+            padding: 5px 10px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #d4f1f9;
+            border: 1px solid #6db0c2;
+            white-space: nowrap;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+
+        /* Иконки действий (компактно справа от названия) */
+        .action-icons {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .action-icons span {
+            background: #0e3a46aa;
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid #6db0c2;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            color: #c8e7f0;
+        }
+
+        /* Для длинных названий — переносим на всю ширину, но сохраняем центрирование */
+        .location-card {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+        }
+
+        /* Попап (всплывающее окно) */
+        .popup {
+            position: fixed;
+            background: #133e48e6;
+            backdrop-filter: blur(16px);
+            border: 2px solid #7fc1d1;
+            border-radius: 28px;
+            padding: 18px 22px;
+            min-width: 260px;
+            max-width: 320px;
+            color: #e1f3f7;
+            font-size: 14px;
+            z-index: 1000;
+            pointer-events: auto;
+            box-shadow: 0 12px 28px rgba(0, 20, 25, 0.5);
+            transition: opacity 0.2s;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .popup.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup h4 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #adeeff;
+            border-left: 4px solid #48b5ca;
+            padding-left: 14px;
+        }
+
+        .popup p {
+            margin: 10px 0;
+            line-height: 1.45;
+        }
+
+        .popup .actions-list {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #5b9aab;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .popup .actions-list span {
+            background: #1e5f6e;
+            padding: 5px 12px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            background: none;
+            border: none;
+            color: #9fd3e0;
+            font-size: 22px;
+            cursor: pointer;
+            pointer-events: auto;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+
+        .close-popup:hover {
+            color: white;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="map" id="mapContainer">
-        <!-- СЮДА БУДУТ ДОБАВЛЯТЬСЯ ЛОКАЦИИ И ЛИНИИ -->
-    </div>
-    <div class="info-panel" id="infoPanel">
-        <h3 id="infoTitle">🌍 Кликни на локацию</h3>
-        <p id="infoDesc">Нажми на любой значок на карте</p>
-    </div>
+<div class="map-wrapper">
+    <!-- Ваша картинка-фон -->
+    <img src="proba.png" usemap="#image-map" id="baseMap">
+
+    <!-- Слой для карточек локаций -->
+    <div class="overlay" id="overlayLayer"></div>
+
+    <!-- Image Map с координатами -->
+    <map name="image-map" id="imageMap">
+        <area target="" alt="Шелестящий Тростник" title="Шелестящий Тростник" coords="759,540,523,306" shape="rect" data-id="trostnik">
+        <area target="" alt="Лягушатник" title="Лягушатник" coords="830,305,1062,528" shape="rect" data-id="lyagush">
+        <area target="" alt="Галечный берег" title="Галечный берег" coords="78,437,324,658" shape="rect" data-id="galec">
+        <area target="" alt="Камышовые Заросли" title="Камышовые Заросли" coords="106,243,347,468" shape="rect" data-id="kamysh">
+        <area target="" alt="Междуречье" title="Междуречье" coords="333,569,576,797" shape="rect" data-id="mezhdurech">
+        <area target="" alt="Скользкие камни" title="Скользкие камни" coords="323,803,561,995" shape="rect" data-id="kamni">
+        <area target="" alt="Торфяник" title="Торфяник" coords="1192,840,954,609" shape="rect" data-id="torf">
+        <area target="" alt="Пруд ужей" title="Пруд ужей" coords="1193,609,1421,840" shape="rect" data-id="uzhi">
+        <area target="" alt="Тёплый ручеёк" title="Тёплый ручеёк" coords="714,566,954,797" shape="rect" data-id="ruchey">
+        <area target="" alt="Приток" title="Приток" coords="1148,854,1393,1098" shape="rect" data-id="pritok">
+    </map>
 </div>
 
 <script>
     // ========== ДАННЫЕ ЛОКАЦИЙ ==========
     const locationsData = {
-        "пещера": {
-            left: "10%",      // отступ слева (можно "200px", "15%")
-            top: "20%",       // отступ сверху
-            img: "cave.png",  // картинка локации (положите в репозиторий)
-            name: "Пещера духов",
-            desc: "Тёмный грот, где обитают предки. 🦇"
+        trostnik: {
+            name: "Шелестящий Тростник",
+            desc: "Берег, заросший высоким камышом. Ветер создаёт мягкий шелест, успокаивающий душу.",
+            actions: ["💧 Питьё", "🐟 Охота на рыб", "🌿 Сбор трав"],
+            actionIcons: ["💧", "🐟", "🌿"],
+            iconImg: null  // поставьте сюда "trostnik.png" когда загрузите картинку
         },
-        "костер": {
-            left: "70%",
-            top: "15%",
-            img: "fire.png",
-            name: "Священный костёр",
-            desc: "Место ночных ритуалов. 🔥"
+        lyagush: {
+            name: "Лягушатник",
+            desc: "Тёплое мелководье, где квакают лягушки. Место безмятежности и влажной прохлады.",
+            actions: ["🐸 Ловля лягушек", "🧪 Зельеварение", "🎵 Слушать кваканье"],
+            actionIcons: ["🐸", "🧪", "🎵"],
+            iconImg: null
         },
-        "река": {
-            left: "50%",
-            top: "70%",
-            img: "river.png",
-            name: "Река Жизни",
-            desc: "Ловим рыбу и слушаем воду. 🐟"
+        galec: {
+            name: "Галечный берег",
+            desc: "Мелкая галька мягко шуршит под ногами. Вода здесь чистая и прозрачная.",
+            actions: ["💎 Поиск самоцветов", "🚶 Медитация", "🏊 Купание"],
+            actionIcons: ["💎", "🧘", "🏊"],
+            iconImg: null
+        },
+        kamysh: {
+            name: "Камышовые Заросли",
+            desc: "Густые заросли камыша. Хорошее место для укрытия и наблюдения за водоплавающими.",
+            actions: ["🎨 Плетение", "🦆 Охота на уток", "📸 Фотоохота"],
+            actionIcons: ["🎨", "🦆", "📸"],
+            iconImg: null
+        },
+        mezhdurech: {
+            name: "Междуречье",
+            desc: "Песчаная коса между двумя рукавами реки. Открывается вид на оба течения.",
+            actions: ["🏕️ Привал", "🎣 Рыбалка", "🗺️ Изучение карт"],
+            actionIcons: ["🏕️", "🎣", "🗺️"],
+            iconImg: null
+        },
+        kamni: {
+            name: "Скользкие камни",
+            desc: "Валуны, покрытые мхом и тиной. Требуют осторожности, но дарят ощущение единения с водой.",
+            actions: ["⚡ Испытание ловкости", "📿 Сбор мха", "💦 Испить воду"],
+            actionIcons: ["⚡", "📿", "💦"],
+            iconImg: null
+        },
+        torf: {
+            name: "Торфяник",
+            desc: "Мягкая торфяная почва с ароматом древних трав. Энергетически чистое место.",
+            actions: ["🕯️ Ритуалы", "🌱 Сбор торфа", "😴 Сон на мху"],
+            actionIcons: ["🕯️", "🌱", "😴"],
+            iconImg: null
+        },
+        uzhi: {
+            name: "Пруд ужей",
+            desc: "Заводи, где греются на солнце ужи. Они неопасны и приносят удачу.",
+            actions: ["🐍 Наблюдение", "🍃 Сбор трав", "🎋 Создание оберегов"],
+            actionIcons: ["🐍", "🍃", "🎋"],
+            iconImg: null
+        },
+        ruchey: {
+            name: "Тёплый ручеёк",
+            desc: "Медленный ручей с приятно тёплой водой даже в прохладный день. Красноягодка пыталась утопить здесь Пузатого Змея. К сожалению, большое пузо все время выталкивало кота на поверхность. Красноягодка ушла, а Пузатый Змей так и остался на месте. Решил помыться. А еще тут можно плавать.",
+            actions: ["💆 Моющийся Пузатый Змей", "🍓 Красноягодка", "💦 Плавательная локация"],
+            actionIcons: ["💆", "🧺", "🍵"],
+            iconImg: "https://i.ibb.co/bMspmYnv/Tonkiy-Rucheyok-okonchatelnaya-versia-na-21042026-kopia-3.png"
+        },
+        pritok: {
+            name: "Приток",
+            desc: "Тихая заводь, куда впадает малый ручей. Идеально для размышлений в одиночестве.",
+            actions: ["🧘 Медитация", "📖 Чтение", "🎶 Игра на флейте"],
+            actionIcons: ["🧘", "📖", "🎶"],
+            iconImg: null
         }
     };
 
-    // ========== СТРЕЛКИ МЕЖДУ ЛОКАЦИЯМИ (ключ → куда) ==========
-    const connections = [
-        { from: "пещера", to: "костер" },
-        { from: "костер", to: "река" },
-        { from: "пещера", to: "река" }
-    ];
+    // Функция отрисовки иконки + подписи + действий (всё центрировано)
+    function getLocationCardHtml(locationId) {
+        const data = locationsData[locationId];
+        if (!data) return '<div>?</div>';
 
-    // ========== СОЗДАЁМ КАРТУ ==========
-    const mapDiv = document.getElementById('mapContainer');
-    const locationsRefs = {}; // сохраним ссылки на DOM-элементы
-
-    // 1. Рисуем локации
-    for (const [id, data] of Object.entries(locationsData)) {
-        const locDiv = document.createElement('div');
-        locDiv.className = 'location';
-        locDiv.style.left = data.left;
-        locDiv.style.top = data.top;
-        locDiv.setAttribute('data-id', id);
-        locDiv.setAttribute('data-name', data.name);
-        locDiv.setAttribute('data-desc', data.desc);
-
-        // картинка
-        const img = document.createElement('img');
-        img.src = data.img;
-        img.alt = data.name;
-        const span = document.createElement('span');
-        span.innerText = data.name;
-
-        locDiv.appendChild(img);
-        locDiv.appendChild(span);
-
-        // клик
-        locDiv.addEventListener('click', () => {
-            document.getElementById('infoTitle').innerHTML = `📍 ${data.name}`;
-            document.getElementById('infoDesc').innerHTML = data.desc;
-        });
-
-        mapDiv.appendChild(locDiv);
-        locationsRefs[id] = locDiv;
+        // Иконка локации (если есть своя картинка, иначе эмодзи)
+        let iconHtml = '';
+        if (data.iconImg) {
+            iconHtml = `<img src="${data.iconImg}" style="width: 52px; height: 52px;">`;
+        } else {
+            // Временно используем эмодзи-заглушку (можно заменить на любой)
+            const defaultEmoji = {
+                trostnik: "🌾", lyagush: "🐸", galec: "🪨", kamysh: "🌿",
+                mezhdurech: "💧", kamni: "🪨", torf: "🪵", uzhi: "🐍",
+                ruchey: "💦", pritok: "🏞️"
+            };
+            iconHtml = `<div style="font-size: 44px; text-align: center; line-height: 1;">${defaultEmoji[locationId] || "📍"}</div>`;
+        }
+        
+        // Действия (компактные иконки справа от названия)
+        const actionsHtml = data.actionIcons.map(icon => `<span>${icon}</span>`).join('');
+        
+        return `
+            <div class="location-icon">
+                ${iconHtml}
+            </div>
+            <div class="label-actions-wrapper">
+                <span class="location-label">${data.name}</span>
+                <div class="action-icons">
+                    ${actionsHtml}
+                </div>
+            </div>
+        `;
     }
 
-    // 2. Рисуем линии (стрелки) ПОСЛЕ того, как локации появились на странице
-    function drawLine(fromId, toId) {
-        const fromEl = locationsRefs[fromId];
-        const toEl = locationsRefs[toId];
-        if (!fromEl || !toEl) return;
+    // ========== РАБОТА С ПОПАПОМ ==========
+    let popup = null;
 
-        const fromRect = fromEl.getBoundingClientRect();
-        const toRect = toEl.getBoundingClientRect();
-        const mapRect = mapDiv.getBoundingClientRect();
-
-        // центр квадратика
-        const fromX = fromRect.left + fromRect.width / 2 - mapRect.left;
-        const fromY = fromRect.top + fromRect.height / 2 - mapRect.top;
-        const toX = toRect.left + toRect.width / 2 - mapRect.left;
-        const toY = toRect.top + toRect.height / 2 - mapRect.top;
-
-        // длина и угол
-        const dx = toX - fromX;
-        const dy = toY - fromY;
-        const length = Math.hypot(dx, dy);
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-        // создаём линию
-        const line = document.createElement('div');
-        line.className = 'line';
-        line.style.width = `${length}px`;
-        line.style.height = '4px';
-        line.style.background = `linear-gradient(90deg, #ffaa44, #b87a2e)`;
-        line.style.left = `${fromX}px`;
-        line.style.top = `${fromY - 2}px`;
-        line.style.transform = `rotate(${angle}deg)`;
-        line.style.transformOrigin = '0 0';
-        line.style.position = 'absolute';
-
-        // наконечник стрелки
-        line.style.backgroundImage = `url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\"><polygon points=\"0,0 10,5 0,10\" fill=\"%23ffaa44\"/></svg>')`;
-        line.style.backgroundRepeat = 'no-repeat';
-        line.style.backgroundPosition = 'right center';
-        line.style.backgroundSize = '10px';
-
-        mapDiv.appendChild(line);
+    function createPopup() {
+        const div = document.createElement('div');
+        div.className = 'popup';
+        div.innerHTML = `
+            <button class="close-popup">✖</button>
+            <h4></h4>
+            <p></p>
+            <div class="actions-list"></div>
+        `;
+        document.body.appendChild(div);
+        return div;
     }
 
-    // рисуем все связи
-    setTimeout(() => {
-        connections.forEach(conn => drawLine(conn.from, conn.to));
-    }, 100); // маленькая задержка, чтобы браузер точно рассчитал позиции
+    popup = createPopup();
+    const closeBtn = popup.querySelector('.close-popup');
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.classList.remove('active');
+    });
+
+    // Закрытие кликом мимо
+    document.body.addEventListener('click', (e) => {
+        if (!popup.contains(e.target) && !e.target.closest('.location-card')) {
+            popup.classList.remove('active');
+        }
+    });
+
+    function showPopupNear(element, locationId) {
+        const rect = element.getBoundingClientRect();
+        const data = locationsData[locationId];
+        if (!data) return;
+
+        // Заполняем данные
+        popup.querySelector('h4').innerHTML = `💧 ${data.name}`;
+        popup.querySelector('p').innerHTML = data.desc;
+        
+        const actionsContainer = popup.querySelector('.actions-list');
+        actionsContainer.innerHTML = data.actions.map(action => `<span>${action}</span>`).join('');
+        
+        // Позиционируем справа от карточки
+        let top = rect.top + window.scrollY - 15;
+        let left = rect.right + window.scrollX + 12;
+        
+        // Если не влезает справа — слева
+        if (left + 320 > window.innerWidth) {
+            left = rect.left + window.scrollX - 330;
+        }
+        // Если не влезает сверху — корректируем
+        if (top + 280 > window.innerHeight + window.scrollY) {
+            top = rect.bottom + window.scrollY - 250;
+        }
+        
+        popup.style.top = `${Math.max(8, top)}px`;
+        popup.style.left = `${Math.max(8, left)}px`;
+        popup.classList.add('active');
+    }
+
+    // ========== СОЗДАНИЕ КАРТОЧЕК НАД КАРТОЙ ==========
+    const areas = document.querySelectorAll('#imageMap area');
+    const overlay = document.getElementById('overlayLayer');
+    const mapImg = document.getElementById('baseMap');
+
+    function createLocationCards() {
+        overlay.innerHTML = '';
+        
+        const updateCards = () => {
+            const naturalWidth = mapImg.naturalWidth;
+            const naturalHeight = mapImg.naturalHeight;
+            if (!naturalWidth || !naturalHeight) return;
+            
+            const currentRect = mapImg.getBoundingClientRect();
+            const scaleX = currentRect.width / naturalWidth;
+            const scaleY = currentRect.height / naturalHeight;
+            
+            areas.forEach(area => {
+                const coords = area.getAttribute('coords').split(',').map(Number);
+                if (coords.length !== 4) return;
+                let [x1, y1, x2, y2] = coords;
+                
+                // Центр прямоугольника
+                let centerX = (x1 + x2) / 2 * scaleX;
+                let centerY = (y1 + y2) / 2 * scaleY;
+                
+                const locationId = area.getAttribute('data-id');
+                if (!locationId || !locationsData[locationId]) return;
+                
+                // Создаём карточку
+                const card = document.createElement('div');
+                card.className = 'location-card';
+                card.style.left = `${centerX - 60}px`;
+                card.style.top = `${centerY - 55}px`;
+                card.style.width = 'auto';
+                card.style.maxWidth = '160px';
+                
+                card.innerHTML = getLocationCardHtml(locationId);
+                
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showPopupNear(card, locationId);
+                });
+                
+                overlay.appendChild(card);
+            });
+        };
+        
+        if (mapImg.complete) {
+            updateCards();
+        } else {
+            mapImg.onload = updateCards;
+        }
+    }
+    
+    createLocationCards();
+    
+    // Пересчёт при изменении размера окна
+    window.addEventListener('resize', () => {
+        createLocationCards();
+        popup.classList.remove('active');
+    });
 </script>
 </body>
 </html>
